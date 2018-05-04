@@ -27,23 +27,6 @@ import org.apache.spark.streaming.kafka09.KafkaUtils;
 import org.apache.spark.streaming.kafka09.LocationStrategies;
 
 
-
-/**
- * @author jcasaletto
- *
- * Consumes syslog messages from input Kafka topic, looks for alerts, then produces records to output Kafka topic
- *
- * Usage: Syslog2Alert <broker> <master> <in-topic> <out-topic> <cg> <interval> <threshold>
- *   <broker> is one of the servers in the kafka cluster
- *   <master> is either local[n] or yarn
- *   <in-topic> is the kafka topic to consume from
- *   <out-topic> is the kafka topic to produce to
- *   <cg> is the consumer group name
- *   <interval> is the number of milliseconds per batch
- *   <threshold> is the integer syslog level at which alerts are generated
- *
- */
-
 public final class Syslog2Alert {
     public static void main(String[] args) {
         if (args.length < 7) {
@@ -74,23 +57,20 @@ public final class Syslog2Alert {
           "org.apache.kafka.common.serialization.StringDeserializer");
 
 
-        // TODO: populate the kafkaParams map with the following values:
-        // key.deserializer, value.deserializer, bootstrap.servers, and group.id
-
         // initialize the streaming context
         JavaStreamingContext jssc = new JavaStreamingContext(deployEndpoint, "Syslog2Alert",
             new Duration(interval));
 
-        // pull ConsumerRecords out of the stream
+ 
         JavaInputDStream<ConsumerRecord<String, String>> messages =
                         KafkaUtils.createDirectStream(
                         jssc,
                         LocationStrategies.PreferConsistent(),
                         ConsumerStrategies.<String, String>SubscribePattern(topicPattern, kafkaParams)
                       );
-        //messages.print();
+       
 
-        // TODO: implement the map() function to pull values out of ConsumerRecords
+     
         JavaDStream<String> values = messages.map(new Function<ConsumerRecord<String,String>, String>() {
             /**
 			 *
@@ -103,9 +83,9 @@ public final class Syslog2Alert {
             }
         });
 ;
-        //values.print();
+       
 
-        // TODO: implement the filter() function to filter messages less than or equal to threshold
+   
 JavaDStream<String> alertMessages = values.filter(new Function<String, Boolean>() {
     /**
 	 *
@@ -120,7 +100,7 @@ JavaDStream<String> alertMessages = values.filter(new Function<String, Boolean>(
     }});
 
 
-        // TODO: implement the call() method to send the alerts to the output stream
+        
         alertMessages.foreachRDD(new VoidFunction<JavaRDD<String>>() {
             private static final long serialVersionUID = 2700738329774962618L;
             @Override
@@ -151,10 +131,10 @@ JavaDStream<String> alertMessages = values.filter(new Function<String, Boolean>(
                           "org.apache.kafka.connect.json.JsonSerializer");
 
 
-                        // TODO: instantiate the producer once per partition -- is there a better way?
+                    
                         KafkaProducer<String, JsonNode> producer = new KafkaProducer<>(producerProps);
 
-                        // TODO: iterate through the iterator, create and prodcue JSON record value (use null key)
+                        
                         while (iterator.hasNext()) {
 							String logStr = iterator.next();
 							ObjectMapper mapper=new ObjectMapper();
